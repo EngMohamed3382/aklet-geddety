@@ -1,13 +1,15 @@
-// src/app/join/page.tsx
-
-"use client"; // <-- مهم جدًا: هذا المكون تفاعلي
+"use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from '@/utils/supabase/client'; // 1. استيراد الدالة الصحيحة
 import { useRouter } from "next/navigation";
 
 export default function JoinPage() {
+  const supabase = createClient(); // 2. إنشاء العميل هنا
   const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [story, setStory] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -26,54 +28,62 @@ export default function JoinPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(false);
 
-    if (!avatarFile) {
-      setError("من فضلك اختر صورة شخصية.");
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setError("حدث خطأ أثناء إنشاء الحساب: " + authError.message);
       setLoading(false);
       return;
     }
 
-    // 1. رفع الصورة إلى Supabase Storage
-    const fileName = `${Date.now()}-${avatarFile.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(fileName, avatarFile);
-
-    if (uploadError) {
-      setError("حدث خطأ أثناء رفع الصورة: " + uploadError.message);
-      setLoading(false);
-      return;
+    if (!authData.user) {
+        setError("تم إنشاء الحساب، ولكن لم يتم العثور على بيانات المستخدم. الرجاء محاولة تسجيل الدخول.");
+        setLoading(false);
+        return;
     }
+    
+    let publicUrl = "";
+    if (avatarFile) {
+        const fileName = `${Date.now()}-${avatarFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, avatarFile);
 
-    // 2. الحصول على الرابط العام للصورة
-    const { data: publicUrlData } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(fileName);
-
-    const publicUrl = publicUrlData.publicUrl;
-
-
-    // 3. إضافة بيانات الطاهي مع رابط الصورة إلى جدول "cooks"
+        if (uploadError) {
+          setError("حدث خطأ أثناء رفع الصورة: " + uploadError.message);
+          setLoading(false);
+          return;
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(fileName);
+        
+        publicUrl = publicUrlData.publicUrl;
+    }
+    
     const { error: insertError } = await supabase.from("cooks").insert({
       name,
       story,
       whatsapp_number: whatsapp,
       profile_image_url: publicUrl,
+      user_id: authData.user.id,
     });
 
     if (insertError) {
-      setError("حدث خطأ أثناء حفظ البيانات: " + insertError.message);
+      setError("حدث خطأ أثناء حفظ الملف الشخصي: " + insertError.message);
       setLoading(false);
       return;
     }
 
-    // 4. تمت العملية بنجاح
     setLoading(false);
     setSuccess(true);
-    // إعادة توجيه المستخدم للصفحة الرئيسية بعد ثانيتين
     setTimeout(() => {
-      router.push("/");
+      router.push("/login");
     }, 2000);
   };
 
@@ -84,7 +94,18 @@ export default function JoinPage() {
       </h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block font-medium">الاسم</label>
+          <label htmlFor="email" className="block font-medium">البريد الإلكتروني (للدخول لحسابك)</label>
+          <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full p-2 border rounded" />
+        </div>
+        <div>
+          <label htmlFor="password" className="block font-medium">كلمة المرور</label>
+          <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="w-full p-2 border rounded" />
+        </div>
+
+        <hr className="my-6"/>
+
+        <div>
+          <label htmlFor="name" className="block font-medium">اسمك (كما سيظهر للعملاء)</label>
           <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required className="w-full p-2 border rounded" />
         </div>
         <div>
@@ -97,13 +118,14 @@ export default function JoinPage() {
         </div>
         <div>
           <label htmlFor="avatar" className="block font-medium">الصورة الشخصية</label>
-          <input type="file" id="avatar" onChange={handleFileChange} required accept="image/*" className="w-full p-2 border rounded" />
+          <input type="file" id="avatar" onChange={handleFileChange} accept="image/*" className="w-full p-2 border rounded" />
         </div>
-        <button type="submit" disabled={loading} className="w-full bg-green-600 text-white p-3 rounded font-bold hover:bg-green-700 disabled:bg-gray-400">
-          {loading ? "جاري التسجيل..." : "سجل الآن"}
+
+        <button type="submit" disabled={loading} className="w-full bg-primary text-white p-3 rounded font-bold hover:opacity-90 disabled:bg-gray-400">
+          {loading ? "جاري إنشاء الحساب..." : "أنشئ حسابي وملفي الشخصي"}
         </button>
         {error && <p className="text-red-500 text-center">{error}</p>}
-        {success && <p className="text-green-500 text-center">تم التسجيل بنجاح! سيتم توجيهك للصفحة الرئيسية.</p>}
+        {success && <p className="text-green-500 text-center">تم إنشاء الحساب بنجاح! سيتم توجيهك لصفحة الدخول.</p>}
       </form>
     </main>
   );
