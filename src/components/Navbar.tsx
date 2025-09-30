@@ -7,13 +7,13 @@ import type { User } from '@supabase/supabase-js';
 export default function Navbar() {
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // <-- 1. إضافة متغير الحالة "loading"
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      setLoading(false); // <-- 2. إيقاف التحميل بعد التأكد من حالة المستخدم
+      setLoading(false);
     };
     checkUser();
 
@@ -39,13 +39,14 @@ export default function Navbar() {
           <Link href="/" className="text-2xl font-bold text-primary">
             أكلة جدتي 👵
           </Link>
-          <div className="flex items-center">
-            {/* 3. عدم عرض أي أزرار طالما أن الصفحة لا تزال في حالة التحميل */}
+          
+          {/* We added `gap-x-4` here to create space */}
+          <div className="flex items-center gap-x-4">
             {loading ? (
               <div className="w-24 h-8 bg-gray-200 rounded-md animate-pulse"></div>
             ) : user ? (
               <>
-                <Link href="/dashboard" className="text-sm font-medium text-text-dark hover:text-primary mr-4">
+                <Link href="/dashboard" className="text-sm font-medium text-text-dark hover:text-primary">
                   لوحة التحكم
                 </Link>
                 <button onClick={handleLogout} className="text-sm font-medium text-text-dark hover:text-primary">
@@ -54,7 +55,7 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/join" className="text-sm font-medium text-text-dark hover:text-primary mr-4">
+                <Link href="/join" className="text-sm font-medium text-text-dark hover:text-primary">
                   انضم كطاهٍ
                 </Link>
                 <Link href="/login" className="px-3 py-2 rounded-md text-sm font-medium text-white bg-primary hover:opacity-90">
