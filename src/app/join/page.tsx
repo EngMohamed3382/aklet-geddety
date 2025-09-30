@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from '@/utils/supabase/client'; // 1. استيراد الدالة الصحيحة
+import { createClient } from '@/utils/supabase/client';
 import { useRouter } from "next/navigation";
 
 export default function JoinPage() {
-  const supabase = createClient(); // 2. إنشاء العميل هنا
+  const supabase = createClient();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -48,7 +48,11 @@ export default function JoinPage() {
     
     let publicUrl = "";
     if (avatarFile) {
-        const fileName = `${Date.now()}-${avatarFile.name}`;
+        // === هذا هو السطر الذي تم تعديله ===
+        // نقوم باستبدال كل المسافات في اسم الملف بشرطة (-) لجعله آمنًا
+        const fileName = `${Date.now()}-${avatarFile.name.replace(/\s/g, '-')}`;
+        // ===================================
+
         const { error: uploadError } = await supabase.storage
           .from("avatars")
           .upload(fileName, avatarFile);
