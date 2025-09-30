@@ -48,10 +48,12 @@ export default function JoinPage() {
     
     let publicUrl = "";
     if (avatarFile) {
-        // === هذا هو السطر الذي تم تعديله ===
-        // نقوم باستبدال كل المسافات في اسم الملف بشرطة (-) لجعله آمنًا
-        const fileName = `${Date.now()}-${avatarFile.name.replace(/\s/g, '-')}`;
-        // ===================================
+        // === هذا هو الجزء الذي تم تعديله بشكل كامل ===
+        // 1. استخراج امتداد الملف
+        const fileExt = avatarFile.name.split('.').pop();
+        // 2. إنشاء اسم ملف عشوائي وآمن
+        const fileName = `${Math.random()}.${fileExt}`;
+        // ===========================================
 
         const { error: uploadError } = await supabase.storage
           .from("avatars")
