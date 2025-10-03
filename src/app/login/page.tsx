@@ -58,6 +58,13 @@ export default function LoginPage() {
             className="w-full p-2 border rounded"
           />
         </div>
+	{/* === This is the new link we added === */}
+        <div className="text-right">
+          <Link href="/forgot-password" className="text-sm text-text-light hover:underline hover:text-primary">
+            نسيت كلمة المرور؟
+          </Link>
+        </div>
+        {/* ================================== */}
         <button type="submit" disabled={loading} className="w-full bg-primary text-white p-3 rounded font-bold hover:opacity-90 disabled:bg-gray-400">
           {loading ? 'جاري الدخول...' : 'تسجيل الدخول'}
         </button>
