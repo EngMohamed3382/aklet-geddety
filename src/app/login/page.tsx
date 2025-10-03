@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // <-- This is the missing line
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -25,10 +26,9 @@ export default function LoginPage() {
       setError("فشل تسجيل الدخول: البريد الإلكتروني أو كلمة المرور غير صحيحة.");
       setLoading(false);
     } else {
-      // Clear any errors and redirect to the dashboard
       setError(null);
       router.push('/dashboard');
-      router.refresh(); // To ensure the navbar updates
+      router.refresh();
     }
   };
 
@@ -58,13 +58,13 @@ export default function LoginPage() {
             className="w-full p-2 border rounded"
           />
         </div>
-	{/* === This is the new link we added === */}
+        
         <div className="text-right">
           <Link href="/forgot-password" className="text-sm text-text-light hover:underline hover:text-primary">
             نسيت كلمة المرور؟
           </Link>
         </div>
-        {/* ================================== */}
+
         <button type="submit" disabled={loading} className="w-full bg-primary text-white p-3 rounded font-bold hover:opacity-90 disabled:bg-gray-400">
           {loading ? 'جاري الدخول...' : 'تسجيل الدخول'}
         </button>
